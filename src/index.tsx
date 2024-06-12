@@ -1,3 +1,6 @@
-export function multiply(a: number, b: number): Promise<number> {
-  return Promise.resolve(a * b);
-}
+import FloatingBox from './FloatingBox';
+
+type FloatingBoxProps = TFloatingBoxProps;
+type FloatingBoxRef = TFloatingBoxRef;
+
+export { FloatingBox, FloatingBoxProps, FloatingBoxRef };

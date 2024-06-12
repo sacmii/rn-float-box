@@ -1,6 +1,6 @@
 {
   "name": "rn-float-box",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Floating box component for react-native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

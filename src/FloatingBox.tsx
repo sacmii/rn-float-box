@@ -11,15 +11,29 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
+import {
+  TFloatingBoxPosition,
+  TFloatingBoxProps,
+  TFloatingBoxRef,
+} from './types';
 
 const { height: sHeight, width: sWidth } = Dimensions.get('window');
 
 const FloatingBox = React.forwardRef<TFloatingBoxRef, TFloatingBoxProps>(
   (
-    { height, width, initialPosition, children = null, containerStyle = {} },
+    {
+      height,
+      width,
+      initialProps: {
+        position: initialPosition = { x: 0, y: 0 },
+        visible: initialVisible = true,
+      } = {},
+      children = null,
+      containerStyle = {},
+    },
     ref
   ) => {
-    const visible = useSharedValue<boolean>(true);
+    const visible = useSharedValue<boolean>(initialVisible);
     const scale = useSharedValue<TFloatingBoxPosition>({ x: 1, y: 1 });
     const movBegLoc = useSharedValue<TFloatingBoxPosition>(initialPosition);
     const location = useSharedValue<TFloatingBoxPosition>(initialPosition);
@@ -33,10 +47,6 @@ const FloatingBox = React.forwardRef<TFloatingBoxRef, TFloatingBoxProps>(
           let scaleWidth = width * changeScale;
           if (scaleHeight <= sHeight && scaleWidth <= sWidth) {
             scale.value = { x: changeScale, y: changeScale };
-            // Move the box to the center of the screen
-            let x = (sWidth - scaleWidth) / 2;
-            let y = (sHeight - scaleHeight) / 2;
-            location.value = { x, y };
           }
         }
       }

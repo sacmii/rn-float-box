@@ -1,17 +1,24 @@
-type TFloatingBoxPosition = {
+import { ViewStyle } from 'react-native';
+
+export type TFloatingBoxPosition = {
   x: number;
   y: number;
 };
 
-type TFloatingBoxProps = {
+export type TInitialProps = {
+  position: TFloatingBoxPosition;
+  visible: boolean;
+};
+
+export type TFloatingBoxProps = {
   height: number;
   width: number;
-  initialPosition: TFloatingBoxPosition;
+  initialProps?: TInitialProps;
   children?: React.ReactNode;
   containerStyle?: ViewStyle;
 };
 
-type TFloatingBoxRef = {
+export type TFloatingBoxRef = {
   move: (position: TFloatingBoxPosition) => void;
   setVisible: (visible: boolean) => void;
   getVisible: () => boolean;

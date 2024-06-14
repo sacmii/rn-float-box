@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { FloatingBox, FloatingBoxRef } from 'rn-float-box';
+import { FloatingBox, TFloatingBoxRef } from 'rn-float-box';
 
 export default function ScreenItem() {
-  const floatingBoxRef = React.useRef<FloatingBoxRef>(null);
+  const floatingBoxRef = React.useRef<TFloatingBoxRef>(null);
   const onPress = () => {
     let visible = floatingBoxRef?.current?.getVisible();
     floatingBoxRef?.current?.setVisible(!visible);
@@ -22,7 +22,10 @@ export default function ScreenItem() {
       <FloatingBox
         ref={floatingBoxRef}
         height={300}
-        initialPosition={{ x: 0, y: 0 }}
+        initialProps={{
+          position: { x: 100, y: 100 },
+          visible: true,
+        }}
         width={200}
         containerStyle={styles.container}
       >

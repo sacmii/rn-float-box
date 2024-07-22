@@ -1,5 +1,7 @@
 ## React Native FloatingBox Component
 
+<img src="https://github.com/user-attachments/assets/db6865d4-bd64-47fc-946f-096f57db165b" width="250" height="auto"/>
+
 ### Overview
 
 `FloatingBox` is a React component designed for use in React Native applications. It leverages the `react-native-gesture-handler` and `react-native-reanimated` libraries to provide an interactive box that can be scaled and moved across the screen using gestures. This component is well-suited for applications where interactive, resizable, and movable UI elements are required, such as photo editors, interactive dashboards, or custom layout editors.

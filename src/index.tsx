@@ -1,4 +1,21 @@
 import FloatingBox from './FloatingBox';
-import { TFloatingBoxProps, TFloatingBoxRef, TInitialProps } from './types';
+import {
+  TFloatingBoxProps,
+  TFloatingBoxRef,
+  TInitialProps,
+  TBoxProps,
+  TFloatingBoxOffset,
+  TFloatingBoxSize,
+  TScaleProps,
+} from './types';
 
-export { FloatingBox, TFloatingBoxProps, TFloatingBoxRef, TInitialProps };
+export {
+  FloatingBox,
+  TBoxProps,
+  TFloatingBoxOffset,
+  TFloatingBoxProps,
+  TFloatingBoxRef,
+  TFloatingBoxSize,
+  TInitialProps,
+  TScaleProps,
+};

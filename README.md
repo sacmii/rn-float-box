@@ -1,3 +1,4 @@
+
 ## React Native FloatingBox Component
 
 <img src="https://github.com/user-attachments/assets/db6865d4-bd64-47fc-946f-096f57db165b" width="250" height="auto"/>
@@ -49,7 +50,7 @@ const App = () => {
       <FloatingBox
         height={100}
         width={100}
-        initialPosition={{ x: 50, y: 50 }}
+        initialProps={{ visible: true, panGestureEnabled: true, pinchGestureEnabled: true }}
         containerStyle={{ backgroundColor: 'blue' }}
       >
         <Text>Content goes here</Text>
@@ -65,25 +66,65 @@ export default App;
 
 The following table lists the props available for the `FloatingBox` component:
 
-| Prop              | Type      | Description                                            | Default Value |
-| ----------------- | --------- | ------------------------------------------------------ | ------------- |
-| `height`          | number    | The initial height of the box.                         | None          |
-| `width`           | number    | The initial width of the box.                          | None          |
-| `initialPosition` | object    | The initial x and y position of the box on the screen. | None          |
-| `children`        | ReactNode | The content to be rendered inside the box.             | `null`        |
-| `containerStyle`  | object    | Additional styling for the box's container.            | `{}`          |
+| Prop                     | Type               | Description                                            | Default Value |
+| ------------------------ | ------------------ | ------------------------------------------------------ | ------------- |
+| `height`                 | number             | The initial height of the box.                         | None          |
+| `width`                  | number             | The initial width of the box.                          | None          |
+| `initialProps`           | `TInitialProps`    | Initial visibility and gesture states.                 | `{}`          |
+| `children`               | ReactNode          | The content to be rendered inside the box.             | `null`        |
+| `containerStyle`         | ViewStyle          | Additional styling for the box's container.            | `{}`          |
+| `maxScale`               | number             | Maximum scale factor for the box.                      | None          |
+| `moveAnimationDuration`  | number             | Duration of the move animation in milliseconds.        | 350           |
+| `scaleAnimationDuration` | number             | Duration of the scale animation in milliseconds.       | 500           |
+| `boxProps`               | `TBoxProps`        | Constraints for box resizing.                          | `{}`          |
+| `scaleProps`             | `TScaleProps`      | Constraints for box scaling.                           | `{}`          |
+
+### Initial Props
+
+The `initialProps` prop accepts an object of type `TInitialProps`, which can contain the following properties:
+
+| Property               | Type      | Description                                      | Default Value |
+| ---------------------- | --------- | ------------------------------------------------ | ------------- |
+| `visible`              | boolean   | Initial visibility of the box.                   | `true`        |
+| `panGestureEnabled`    | boolean   | Initial state of the pan gesture.                | `true`        |
+| `pinchGestureEnabled`  | boolean   | Initial state of the pinch gesture.              | `true`        |
+
+### Box Props
+
+The `boxProps` prop accepts an object of type `TBoxProps`, which can contain the following properties:
+
+| Property               | Type      | Description                                      | Default Value |
+| ---------------------- | --------- | ------------------------------------------------ | ------------- |
+| `minHeightClamp`       | number    | Minimum height for the box.                      | `height` / 2  |
+| `minWidthClamp`        | number    | Minimum width for the box.                       | `width` / 2   |
+| `maxHeightClamp`       | number    | Maximum height for the box.                      | Screen Height |
+| `maxWidthClamp`        | number    | Maximum width for the box.                       | Screen Width  |
+
+### Scale Props
+
+The `scaleProps` prop accepts an object of type `TScaleProps`, which can contain the following properties:
+
+| Property               | Type      | Description                                      | Default Value |
+| ---------------------- | --------- | ------------------------------------------------ | ------------- |
+| `minScaleClamp`        | number    | Minimum scale factor for the box.                | `0.5`         |
+| `maxScaleClamp`        | number    | Maximum scale factor for the box.                | `2`           |
+
 
 ### API Methods
 
 `FloatingBox` exposes the following methods, which can be accessed using the component's ref:
 
-| Method        | Parameters            | Description                                                               |
-| ------------- | --------------------- | ------------------------------------------------------------------------- |
-| `move`        | `position: object`    | Move the box to a new position.                                           |
-| `setVisible`  | `visibility: boolean` | Set the visibility of the box.                                            |
-| `getVisible`  | None                  | Get the current visibility of the box.                                    |
-| `scaleToFit`  | None                  | Scale the box to fit within the screen without altering the aspect ratio. |
-| `scaleToFull` | None                  | Scale the box to completely fill the screen.                              |
+| Method                | Parameters                  | Description                                                               |
+| --------------------- | --------------------------- | ------------------------------------------------------------------------- |
+| `move`                | `position: TFloatingBoxOffset` | Move the box to a new position.                                           |
+| `setVisible`          | `visibility: boolean`       | Set the visibility of the box.                                            |
+| `getVisible`          | None                        | Get the current visibility of the box.                                    |
+| `setSizes`            | `height: number, width: number` | Set the dimensions of the box.                                             |
+| `getSize`             | None                        | Get the current dimensions of the box.                                    |
+| `setPanGestureState`  | `enabled: boolean`          | Enable or disable the pan gesture.                                        |
+| `getPanGestureState`  | None                        | Get the current state of the pan gesture.                                 |
+| `setPinchGestureState`| `enabled: boolean`          | Enable or disable the pinch gesture.                                      |
+| `getPinchGestureState`| None                        | Get the current state of the pinch gesture.                               |
 
 ### License
 

@@ -1,7 +1,7 @@
 
 ## React Native FloatingBox Component
 
-<img src="https://github.com/user-attachments/assets/db6865d4-bd64-47fc-946f-096f57db165b" width="250" height="auto"/>
+<img src="https://github.com/user-attachments/assets/cfdced30-14c9-4b44-8460-c55db7f0fd79" width="250" height="auto"/>
 
 ### Overview
 
@@ -125,6 +125,10 @@ The `scaleProps` prop accepts an object of type `TScaleProps`, which can contain
 | `getPanGestureState`  | None                        | Get the current state of the pan gesture.                                 |
 | `setPinchGestureState`| `enabled: boolean`          | Enable or disable the pinch gesture.                                      |
 | `getPinchGestureState`| None                        | Get the current state of the pinch gesture.                               |
+
+### Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request if you find a bug or have a feature request. See the [contributing guide](./CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
 ### License
 

@@ -1,23 +1,20 @@
 import React from 'react';
-import { Dimensions, StyleSheet, ViewStyle } from 'react-native';
-import {
-  Gesture,
-  GestureDetector,
-  GestureUpdateEvent,
-  PanGestureChangeEventPayload,
-  PanGestureHandlerEventPayload,
-} from 'react-native-gesture-handler';
+import { StyleSheet, ViewStyle, Dimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  clamp,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import {
-  TFloatingBoxPosition,
+  TFloatingBoxOffset,
   TFloatingBoxProps,
   TFloatingBoxRef,
+  TFloatingBoxSize,
 } from './types';
 
-const { height: sHeight, width: sWidth } = Dimensions.get('window');
+const { width: sWidth, height: sHeight } = Dimensions.get('window');
 
 const FloatingBox = React.forwardRef<TFloatingBoxRef, TFloatingBoxProps>(
   (
@@ -25,96 +22,119 @@ const FloatingBox = React.forwardRef<TFloatingBoxRef, TFloatingBoxProps>(
       height,
       width,
       initialProps: {
-        position: initialPosition = { x: 0, y: 0 },
         visible: initialVisible = true,
+        panGestureEnabled: initialPanGesture = true,
+        pinchGestureEnabled: initialPinchGesture = true,
       } = {},
       children = null,
       containerStyle = {},
+      moveAnimationDuration = 350,
+      scaleAnimationDuration = 500,
+      boxProps: {
+        maxHeightClamp = sHeight,
+        minHeightClamp = height / 2,
+        maxWidthClamp = sWidth,
+        minWidthClamp = width / 2,
+      } = {},
+      scaleProps: { maxScaleClamp = 2, minScaleClamp = 0.5 } = {},
     },
     ref
   ) => {
     const visible = useSharedValue<boolean>(initialVisible);
-    const scale = useSharedValue<TFloatingBoxPosition>({ x: 1, y: 1 });
-    const movBegLoc = useSharedValue<TFloatingBoxPosition>(initialPosition);
-    const location = useSharedValue<TFloatingBoxPosition>(initialPosition);
-    // Gesture for scaling the box
-    const scaleGesture = Gesture.Pinch().onChange(
-      ({ scale: changeScale = 1, ...rest }) => {
-        // Check if scale doesnt go below 1 and above max of screen-width or screen height
-        console.log(rest);
-        if (changeScale > 1) {
-          let scaleHeight = height * changeScale;
-          let scaleWidth = width * changeScale;
-          if (scaleHeight <= sHeight && scaleWidth <= sWidth) {
-            scale.value = { x: changeScale, y: changeScale };
-          }
-        }
-      }
-    );
-    // Gesture that moves the box
-    const moveGesture = Gesture.Pan()
-      .onStart(() => {
-        movBegLoc.value = location.value;
+    const boxSize = useSharedValue<TFloatingBoxSize>({ width, height });
+    const translationX = useSharedValue<number>(0);
+    const translationY = useSharedValue<number>(0);
+    const prevTranslationX = useSharedValue<number>(0);
+    const prevTranslationY = useSharedValue<number>(0);
+    const scale = useSharedValue<number>(1);
+    const panGesture = useSharedValue<boolean>(initialPanGesture);
+    const pinchGesture = useSharedValue<boolean>(initialPinchGesture);
+    // Gesture handling
+    const pinch = Gesture.Pinch()
+      .onUpdate((event) => {
+        if (!pinchGesture.value) return;
+        scale.value = clamp(
+          scale.value * event.scale,
+          minScaleClamp,
+          maxScaleClamp
+        );
+        boxSize.value = {
+          width: clamp(width * scale.value, minWidthClamp, maxWidthClamp),
+          height: clamp(height * scale.value, minHeightClamp, maxHeightClamp),
+        };
       })
-      .onChange(
-        ({
-          translationX,
-          translationY,
-        }: GestureUpdateEvent<
-          PanGestureHandlerEventPayload & PanGestureChangeEventPayload
-        >) => {
-          // Don't allow the box to go outside the screen
-          let x = translationX + movBegLoc.value.x;
-          let y = translationY + movBegLoc.value.y;
-          location.value = { x, y };
-        }
-      );
-    // Composed gesture for moving the box
-    const createComposedGesture = () =>
-      Gesture.Simultaneous(scaleGesture, moveGesture);
-    // Memoize the composed gesture
-    const composedGesture = React.useMemo(createComposedGesture, [
-      moveGesture,
-      scaleGesture,
-    ]);
+      .runOnJS(true);
+    const pan = Gesture.Pan()
+      .minDistance(1)
+      .onStart(() => {
+        if (!panGesture.value) return;
+        prevTranslationX.value = translationX.value;
+        prevTranslationY.value = translationY.value;
+      })
+      .onUpdate((event) => {
+        if (!panGesture.value) return;
+        translationX.value = prevTranslationX.value + event.translationX;
+        translationY.value = prevTranslationY.value + event.translationY;
+      })
+      .runOnJS(true);
+    const createComposedGesture = () => Gesture.Simultaneous(pan, pinch);
+    const composedGesture = React.useMemo(createComposedGesture, [pan, pinch]);
     // Animated style for the box
     const animatedStyle = useAnimatedStyle(() => {
       let style: ViewStyle = {
-        height: scale.value.x * height,
-        width: scale.value.y * width,
-        transform: [
-          { translateX: location.value.x },
-          { translateY: location.value.y },
-          { scale: visible.value ? 1 : 0 },
-        ],
+        height: boxSize.value.height,
+        width: boxSize.value.width,
       };
+      style.transform = [
+        { translateX: translationX.value },
+        { translateY: translationY.value },
+      ];
+      if (!visible.value) {
+        style.height = 0;
+        style.width = 0;
+      }
       return style;
-    }, [height, width]);
+    }, [boxSize, visible]);
     // Ref handling
     React.useImperativeHandle(ref, () => ({
-      move: (position) => {
-        location.value = position;
+      move: (position: TFloatingBoxOffset) => {
+        translationX.value = withTiming(position.x, {
+          duration: moveAnimationDuration,
+        });
+        translationY.value = withTiming(position.y, {
+          duration: moveAnimationDuration,
+        });
       },
-      setVisible: (visibilty: boolean) => {
-        visible.value = visibilty;
+      setVisible: (newValue: boolean) => {
+        visible.value = newValue;
       },
       getVisible: () => visible.value,
-      scaleToFit: () => {
-        let fitScale = Math.min(sHeight / height, sWidth / width);
-        scale.value = { x: fitScale, y: fitScale };
+      setSizes: (
+        newHeight: number | null = null,
+        newWidth: number | null = null
+      ) => {
+        let changeHeight = newHeight ?? boxSize.value.height;
+        let changeWidth = newWidth ?? boxSize.value.width;
+        boxSize.value = withTiming(
+          { height: changeHeight, width: changeWidth },
+          { duration: scaleAnimationDuration }
+        );
       },
-      scaleToFull: () => {
-        let fullY = sWidth / width;
-        let fullX = sHeight / height;
-        scale.value = { x: fullX, y: fullY };
-        // Calculate top left corner
+      getSize: () => boxSize.value,
+      setPanGestureState: (enabled: boolean) => {
+        panGesture.value = enabled;
       },
+      setPinchGestureState: (enabled: boolean) => {
+        pinchGesture.value = enabled;
+      },
+      getPanGestureState: () => panGesture.value,
+      getPinchGestureState: () => pinchGesture.value,
     }));
     // Return the floating box
     return (
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.root, containerStyle, animatedStyle]}>
-          {children}
+          {visible.value && children}
         </Animated.View>
       </GestureDetector>
     );

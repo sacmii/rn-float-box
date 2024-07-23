@@ -1,13 +1,12 @@
 import { ViewStyle } from 'react-native';
 
-export type TFloatingBoxPosition = {
+export type TFloatingBoxOffset = {
   x: number;
   y: number;
 };
 
 export type TInitialProps = {
-  position: TFloatingBoxPosition;
-  visible: boolean;
+  visible?: boolean;
 };
 
 export type TFloatingBoxProps = {
@@ -16,12 +15,18 @@ export type TFloatingBoxProps = {
   initialProps?: TInitialProps;
   children?: React.ReactNode;
   containerStyle?: ViewStyle;
+  maxScale?: number;
+};
+
+export type TFloatingBoxSize = {
+  width: number;
+  height: number;
 };
 
 export type TFloatingBoxRef = {
-  move: (position: TFloatingBoxPosition) => void;
+  move: () => void;
   setVisible: (visible: boolean) => void;
   getVisible: () => boolean;
-  scaleToFit: () => void;
-  scaleToFull: () => void;
+  setSizes: (height: number | null, width: number | null) => void;
+  getSize: () => TFloatingBoxSize;
 };

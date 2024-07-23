@@ -8,22 +8,36 @@ export default function ScreenItem() {
     let visible = floatingBoxRef?.current?.getVisible();
     floatingBoxRef?.current?.setVisible(!visible);
   };
-  const scaleToFit = () => {
-    floatingBoxRef?.current?.scaleToFit();
-  };
-  const scaleToFull = () => {
-    floatingBoxRef?.current?.scaleToFull();
+  const onToggleSize = () => {
+    let size = floatingBoxRef?.current?.getSize();
+    if (size?.height === 840) {
+      floatingBoxRef?.current?.setSizes(500, 350);
+    } else {
+      floatingBoxRef?.current?.setSizes(840, 420);
+    }
   };
   return (
-    <View>
-      <Text onPress={onPress}>ScreenItem</Text>
-      <Text onPress={scaleToFit}>Fit Screen</Text>
-      <Text onPress={scaleToFull}>Full Screen</Text>
+    <View style={[styles.flex, styles.flexOne]}>
+      <View style={[styles.flex, styles.flexOne]}>
+        <View style={[styles.flex, styles.buttonStyle]}>
+          <Text onPress={onPress}>Toggle Visibility</Text>
+        </View>
+        <View
+          style={[
+            styles.flex,
+            styles.flexOne,
+            styles.bottomAligned,
+            styles.buttonStyle,
+          ]}
+        >
+          <Text onPress={onPress}>Toggle Visibility</Text>
+          <Text onPress={onToggleSize}>Set Size</Text>
+        </View>
+      </View>
       <FloatingBox
         ref={floatingBoxRef}
         height={300}
         initialProps={{
-          position: { x: 100, y: 100 },
           visible: true,
         }}
         width={200}
@@ -38,5 +52,18 @@ export default function ScreenItem() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#efefef',
+  },
+  buttonStyle: {
+    padding: 50,
+  },
+  flex: {
+    display: 'flex',
+  },
+  flexOne: {
+    flex: 1,
+  },
+  bottomAligned: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
 });

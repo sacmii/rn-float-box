@@ -1,120 +1,98 @@
 import React from 'react';
-import { Dimensions, StyleSheet, ViewStyle } from 'react-native';
-import {
-  Gesture,
-  GestureDetector,
-  GestureUpdateEvent,
-  PanGestureChangeEventPayload,
-  PanGestureHandlerEventPayload,
-} from 'react-native-gesture-handler';
+import { StyleSheet, ViewStyle, Dimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  clamp,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
-import {
-  TFloatingBoxPosition,
-  TFloatingBoxProps,
-  TFloatingBoxRef,
-} from './types';
+import { TFloatingBoxProps, TFloatingBoxRef, TFloatingBoxSize } from './types';
 
-const { height: sHeight, width: sWidth } = Dimensions.get('window');
+const { width: sWidth, height: sHeight } = Dimensions.get('window');
 
 const FloatingBox = React.forwardRef<TFloatingBoxRef, TFloatingBoxProps>(
   (
     {
       height,
       width,
-      initialProps: {
-        position: initialPosition = { x: 0, y: 0 },
-        visible: initialVisible = true,
-      } = {},
+      initialProps: { visible: initialVisible = true } = {},
       children = null,
       containerStyle = {},
     },
     ref
   ) => {
     const visible = useSharedValue<boolean>(initialVisible);
-    const scale = useSharedValue<TFloatingBoxPosition>({ x: 1, y: 1 });
-    const movBegLoc = useSharedValue<TFloatingBoxPosition>(initialPosition);
-    const location = useSharedValue<TFloatingBoxPosition>(initialPosition);
-    // Gesture for scaling the box
-    const scaleGesture = Gesture.Pinch().onChange(
-      ({ scale: changeScale = 1, ...rest }) => {
-        // Check if scale doesnt go below 1 and above max of screen-width or screen height
-        console.log(rest);
-        if (changeScale > 1) {
-          let scaleHeight = height * changeScale;
-          let scaleWidth = width * changeScale;
-          if (scaleHeight <= sHeight && scaleWidth <= sWidth) {
-            scale.value = { x: changeScale, y: changeScale };
-          }
-        }
-      }
-    );
-    // Gesture that moves the box
-    const moveGesture = Gesture.Pan()
-      .onStart(() => {
-        movBegLoc.value = location.value;
+    const boxSize = useSharedValue<TFloatingBoxSize>({ width, height });
+    const translationX = useSharedValue<number>(0);
+    const translationY = useSharedValue<number>(0);
+    const prevTranslationX = useSharedValue<number>(0);
+    const prevTranslationY = useSharedValue<number>(0);
+    const scale = useSharedValue<number>(1);
+    // Gesture handling
+    const pinch = Gesture.Pinch()
+      .onUpdate((event) => {
+        scale.value = clamp(scale.value * event.scale, 0.5, 2);
+        boxSize.value = {
+          width: clamp(width * scale.value, width / 2, sWidth),
+          height: clamp(height * scale.value, height / 2, sHeight),
+        };
       })
-      .onChange(
-        ({
-          translationX,
-          translationY,
-        }: GestureUpdateEvent<
-          PanGestureHandlerEventPayload & PanGestureChangeEventPayload
-        >) => {
-          // Don't allow the box to go outside the screen
-          let x = translationX + movBegLoc.value.x;
-          let y = translationY + movBegLoc.value.y;
-          location.value = { x, y };
-        }
-      );
-    // Composed gesture for moving the box
-    const createComposedGesture = () =>
-      Gesture.Simultaneous(scaleGesture, moveGesture);
-    // Memoize the composed gesture
-    const composedGesture = React.useMemo(createComposedGesture, [
-      moveGesture,
-      scaleGesture,
-    ]);
+      .runOnJS(true);
+    const pan = Gesture.Pan()
+      .minDistance(1)
+      .onStart(() => {
+        prevTranslationX.value = translationX.value;
+        prevTranslationY.value = translationY.value;
+      })
+      .onUpdate((event) => {
+        translationX.value = prevTranslationX.value + event.translationX;
+        translationY.value = prevTranslationY.value + event.translationY;
+      })
+      .runOnJS(true);
+    const createComposedGesture = () => Gesture.Simultaneous(pan, pinch);
+    const composedGesture = React.useMemo(createComposedGesture, [pan, pinch]);
     // Animated style for the box
     const animatedStyle = useAnimatedStyle(() => {
       let style: ViewStyle = {
-        height: scale.value.x * height,
-        width: scale.value.y * width,
-        transform: [
-          { translateX: location.value.x },
-          { translateY: location.value.y },
-          { scale: visible.value ? 1 : 0 },
-        ],
+        height: boxSize.value.height,
+        width: boxSize.value.width,
       };
+      style.transform = [
+        { translateX: translationX.value },
+        { translateY: translationY.value },
+      ];
+      if (!visible.value) {
+        style.height = 0;
+        style.width = 0;
+      }
       return style;
-    }, [height, width]);
+    }, [boxSize, visible]);
     // Ref handling
     React.useImperativeHandle(ref, () => ({
-      move: (position) => {
-        location.value = position;
-      },
-      setVisible: (visibilty: boolean) => {
-        visible.value = visibilty;
+      move: () => {},
+      setVisible: (newValue: boolean) => {
+        visible.value = newValue;
       },
       getVisible: () => visible.value,
-      scaleToFit: () => {
-        let fitScale = Math.min(sHeight / height, sWidth / width);
-        scale.value = { x: fitScale, y: fitScale };
+      setSizes: (
+        newHeight: number | null = null,
+        newWidth: number | null = null
+      ) => {
+        let changeHeight = newHeight ?? boxSize.value.height;
+        let changeWidth = newWidth ?? boxSize.value.width;
+        boxSize.value = withTiming(
+          { height: changeHeight, width: changeWidth },
+          { duration: 500 }
+        );
       },
-      scaleToFull: () => {
-        let fullY = sWidth / width;
-        let fullX = sHeight / height;
-        scale.value = { x: fullX, y: fullY };
-        // Calculate top left corner
-      },
+      getSize: () => boxSize.value,
     }));
     // Return the floating box
     return (
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.root, containerStyle, animatedStyle]}>
-          {children}
+          {visible.value && children}
         </Animated.View>
       </GestureDetector>
     );
